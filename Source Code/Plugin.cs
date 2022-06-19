@@ -1,4 +1,4 @@
-﻿using Utilla;
+using Utilla;
 using System;
 using BepInEx;
 using System.IO;
@@ -48,19 +48,15 @@ namespace GorillaSigns.Main
             rightpalm = GameObject.Find("OfflineVRRig/Actual Gorilla/rig/body/shoulder.R/upper_arm.R/forearm.R/hand.R/palm.01.R/");
             GetFolder();
             CreateObject();
-            loadImag();
+            LoadImage();
             showSign = PlayerPrefs.GetInt("GorillaSignsEnabled", 1);
             res = PlayerPrefs.GetInt("GorillaSignsImageResu", 1);
             imageMode = PlayerPrefs.GetInt("GorillaSignsImageMode", 1);
 
             if (showSign == 1)
-            {
                 signObject.SetActive(true);
-            }
             else
-            {
                 signObject.SetActive(false);
-            }
         }
 
         void GetFolder()
@@ -95,44 +91,17 @@ namespace GorillaSigns.Main
             signObject.transform.SetParent(GameObject.Find("OfflineVRRig/Actual Gorilla/rig/body/shoulder.R/upper_arm.R/forearm.R/hand.R/palm.01.R/").transform, false);
         }
 
-        void loadImag()
+        // Shortened down the code a little, thought it would help ^v^
+        void LoadImage()
         {
-            StartCoroutine(LoadImage());
-        }
-
-        private IEnumerator LoadImage()
-        {
-            var imageGet = GetImageRequest();
-            yield return imageGet.SendWebRequest();
             Texture2D tex = new Texture2D(1024 * res, 1024 * res, TextureFormat.RGB24, false);
-            tex.LoadImage(imageGet.downloadHandler.data);
+            tex.filterMode = (FilterMode)imageMode;
 
-            if (imageMode == 1)
-            {
-                tex.filterMode = FilterMode.Bilinear;
-            }
-            else
-            if (imageMode == 2)
-            {
-                tex.filterMode = FilterMode.Trilinear;
-
-            }
-            else
-            if (imageMode == 0)
-            {
-                tex.filterMode = FilterMode.Point;
-            }
+            byte[] bytes = File.ReadAllBytes(pngImagesPublic[current]);
+            tex.LoadRawTextureData(bytes);
+            tex.Apply();
 
             signObject.transform.GetChild(0).GetComponent<MeshRenderer>().materials[1].mainTexture = tex;
-        }
-
-        private UnityWebRequest GetImageRequest()
-        {
-            var request = new UnityWebRequest(pngImagesPublic[current], "GET");
-
-            request.downloadHandler = new DownloadHandlerBuffer();
-
-            return request;
         }
 
         public static void UpdateImage()
@@ -145,8 +114,8 @@ namespace GorillaSigns.Main
             /* Code here runs every frame when the mod is enabled */
             if (canChange)
             {
+                LoadImage();
                 canChange = false;
-                StartCoroutine(LoadImage());
             }
         }
     }
